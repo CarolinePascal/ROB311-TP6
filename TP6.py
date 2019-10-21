@@ -122,7 +122,7 @@ def plot_mean_pictures(numbers, clusters,data):
     A.append(fig.add_subplot(5,2,10))
 
     for i,a in enumerate(A):
-        a.imshow(compute_mean_picture(len(numbers),i,clusters,data))
+        a.imshow(compute_mean_picture(len(numbers),i,clusters,data),cmap='gray')
     plt.show()
 
 

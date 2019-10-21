@@ -124,7 +124,7 @@ def main():
         unique, counts = np.unique(predicted_numbers, return_counts = True)
 
         # if a number is the most represented in several clusters, 
-        # then we keep the prediction for the best one and assign an other number to the remaining cluster
+        # then we keep the prediction for the best one and assign other numbers to the remaining clusters
 
         while len(unique) != k:
             # finding out which numbers haven't been assigned to any cluster
@@ -133,7 +133,7 @@ def main():
                 if not i in unique:
                     missing_elements = np.append(missing_elements, i)
 
-            # running through ambiguous clusters, and assigning the worst cluster to one of the missing elements
+            # running through ambiguous clusters, and assigning the worst clusters to the missing elements
             for ambiguous_class in unique[np.where(counts != 1)[0]]:
                 ambiguous_class_indexes = np.where(predicted_numbers == ambiguous_class)[0]
                 max_counts_ambiguous_class = np.take(max_counts, ambiguous_class_indexes)
@@ -146,7 +146,6 @@ def main():
 
 
         # mapping the old cluster indexes to the new one
-        
         new_clusters = clusters
         for i in range(k):
             i_indexes = np.where(clusters == i)

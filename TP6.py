@@ -9,6 +9,12 @@ import pickle
 
 
 def load_data(PATH):
+    """ @brief load the data of the data set 
+    @param PATH : string, relative path of the .csv file
+    
+    @return np array(n) labels : array of n labels
+    @return np array(n) images : array of n images"""
+
     with open(PATH) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         images = []
@@ -46,14 +52,6 @@ def init_centroids_each_class(k, data, labels):
 
     return centroids
 
-def compute_fig(row):
-    l = int(np.sqrt(len(row)))
-    picture = np.empty((l,l))
-    for i in range(l):
-        picture[i,:] = row[i*l:(i+1)*l]
-
-    return(picture)
-
 def compute_clusters(centroids, data):
     """ @brief agregate all the points in the dataset into clusters
 
@@ -86,7 +84,16 @@ def comp_new_centroids(k, data, clusters):
 
     return centroids
 
-def results(k,data,labels,clusters):
+def compute_confusion_matrix(k,data,labels,clusters):
+    """ @brief Compute the confusion matrix from results obtained on a testing data set
+
+    @param k: number of classes (or clusters)
+    @param data : np.array (n), testing data set
+    @param labels : np.array (n), labels of the testing data set
+    @param clusters: np array (n) of assigned cluster for each data point
+    
+    @return np array (k,k), confusion matrix"""
+
     counters = np.zeros((k,k))
     for i,index in enumerate(clusters):
         counters[int(labels[i]),int(index)]+=1
@@ -102,6 +109,11 @@ def results(k,data,labels,clusters):
     return(counters)
 
 def plot_confusion_matrix(numbers, cm, title='Confusion matrix', cmap=plt.cm.RdPu):
+    """ @brief Plot the confusion matrix
+
+    @param numbers: list(k), labels of the classes to be put on the side of the matrix
+    @param cm : np.array (k,k), confusion matrix"""
+    
     plt.figure()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
@@ -114,22 +126,31 @@ def plot_confusion_matrix(numbers, cm, title='Confusion matrix', cmap=plt.cm.RdP
     plt.xlabel('Predicted label')
     plt.show()
 
-def plot_mean_pictures(numbers, clusters,data):
-    fig = plt.figure(figsize=(10,8))
-    A = []
-    for i in range(1,len(numbers)):
-        A.append(fig.add_subplot(520+i))
-    A.append(fig.add_subplot(5,2,10))
+def compute_image(row):
+    """ @brief compute the nxn matrix of the image contained in a l² items array
 
-    for i,a in enumerate(A):
-        a.imshow(compute_mean_picture(len(numbers),i,clusters,data),cmap='gray')
-    plt.show()
+    @param row : np array(l²), array containing the image
+    
+    @return np array (l, l), matrix representing the image """
 
+    l = int(np.sqrt(len(row)))
+    picture = np.empty((l,l))
+    for i in range(l):
+        picture[i,:] = row[i*l:(i+1)*l]
 
+    return(picture)
 
-def compute_mean_picture(k,index_cluster,clusters,data):
-    pic_size = int(np.sqrt(len(data[0])))
-    M = np.zeros((pic_size,pic_size))
+def compute_mean_image(index_cluster,clusters,data):
+    """ @brief Compute the mean image associated to a cluster (or class) of a testing data set
+
+    @param index_cluster : index of the cluster
+    @param clusters: np array (n) of assigned cluster for each data point
+    @param data : np.array (n), testing data set
+    
+    @return np array (l, l), matrix representing the mean image """
+
+    l = int(np.sqrt(len(data[0])))
+    M = np.zeros((l,l))
     c=0
 
     for index in clusters:
@@ -138,9 +159,28 @@ def compute_mean_picture(k,index_cluster,clusters,data):
 
     for i,index in enumerate(clusters):
         if(index==index_cluster):
-            M += compute_fig(data[i])/c
+            M += compute_image(data[i])/c
         
     return(M)
+
+def plot_mean_images(numbers, clusters,data):
+    """ @brief Plot the mean image associated to a cluster (or class) of a testing data set
+
+    @param numbers: list(k), labels of the classes to be put on the each mean image
+    @param clusters: np array (n) of assigned cluster for each data point
+    @param data : np.array (n), testing data set"""
+
+    fig = plt.figure(figsize=(10,8))
+    A = []
+    for i in range(1,len(numbers)):
+        A.append(fig.add_subplot(520+i))
+    A.append(fig.add_subplot(5,2,10))
+
+    for i,a in enumerate(A):
+        a.imshow(compute_mean_image(i,clusters,data),cmap='gray')
+        a.set_title(numbers[i])
+    fig.suptitle("Mean image of each cluster")
+    plt.show()
 
 def main():
     k= 10
@@ -218,14 +258,14 @@ def main():
 
     numbers = ['0','1','2','3','4','5','6','7','8','9']
 
-    matrix = results(k,images_test,labels_test,clusters_test)
+    matrix = compute_confusion_matrix(k,images_test,labels_test,clusters_test)
     normalized_martix = matrix/matrix.sum(axis=1)
 
     plot_confusion_matrix(numbers,matrix)
 
     plot_confusion_matrix(numbers,normalized_martix, title='Normalized confusion matrix')
 
-    plot_mean_pictures(numbers,clusters_test,images_test)
+    plot_mean_images(numbers,clusters_test,images_test)
 
 main()
 

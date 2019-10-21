@@ -22,31 +22,68 @@ def load_data(PATH):
             labels.append(row[-1])
     return(np.array(labels),np.array(images))
 
-def init_centroids_random(data):
-    centroids = np.floor(np.random.random_sample((10,))*len(data))
+def init_centroids_random(k, data):
+    centroid_indexes = np.floor(np.random.random_sample((k,))*len(data)).astype(int)
+    
+    return np.take(data,centroid_indexes, axis=0)
+
+def init_centroids_each_class(k, data, labels):
+    centroid_indexes= np.empty(k)
+    for i in range(k):
+        centroid_indexes[i] = np.where(labels == str(i))[0][0]
+
+    centroid_indexes = centroid_indexes.astype(int)
+    centroids = np.take(data,centroid_indexes, axis=0)
+
     return centroids
 
-def init_centroids_each_class(data, labels):
-    centroids = np.empty(10)
-    for i in range(10):
-        centroids[i] = np.where(labels == str(i))[0][0]
-
-    return centroids
-
-def compute_clusters(centroids_index, data):
-    centroid_points = np.take(data,centroids_index, axis=0)
+def compute_clusters(centroids, data):
     clusters = np.empty(len(data))
     for i, point in enumerate(data):
-        print(i)
-        diff = centroid_points-point
-        distances = np.sum(diff*diff)
+        diff = centroids-point
+        distances = np.sum(diff*diff, axis=1)
         clusters[i] = np.argmin(distances)
 
-    print(clusters)
+    return clusters
+
+def comp_new_centroids(k, data, clusters):
+    centroids = np.empty((k, len(data[0])))
+    for i in range(k):
+        cluster_indexes = np.where(clusters == i)[0]
+        cluster_data = np.take(data, cluster_indexes, axis=0)
+        centroids[i] = np.mean(cluster_data, axis=0)
+
+    return centroids
 
 
+def main():
+    k= 10
+    labels_train, images_train = load_data('optdigits_train.csv')
+    labels_test, images_test = load_data('optdigits_test.csv')
 
-labels_train, images_train = load_data('optdigits_train.csv')
-init_centroids_random(images_train)
-centroids_index = init_centroids_each_class(images_train, labels_train)
-compute_clusters(centroids_index, images_train)
+    centroids= init_centroids_random(10, images_train)
+    #centroid_indexes = init_centroids_each_class(images_train, labels_train)
+    old_centroids= np.zeros(centroids.shape)
+
+    nb_it = 0
+    nb_max_it = 100
+   
+    while not np.all(centroids == old_centroids) and nb_it < nb_max_it:
+        clusters = compute_clusters(centroids, images_train)
+        old_centroids = centroids
+        centroids = comp_new_centroids(k, images_train, clusters)
+        nb_it+=1
+
+    print("k-mean algorithm was ran in "+str(nb_it)+"iterations")
+
+    ## prediction
+    clusters_test = np.empty(len(labels_test))
+    for i, image in enumerate(images_test):
+        diff = centroids-image
+        distances = np.sum(diff*diff, axis=1)
+        clusters_test[i] = np.argmin(distances)
+
+    print(clusters_test)
+
+
+main()

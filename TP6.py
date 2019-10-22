@@ -6,7 +6,7 @@ import csv
 import random as rd
 import time
 import pickle
-
+import copy
 
 def load_data(PATH):
     with open(PATH) as csv_file:
@@ -180,6 +180,7 @@ def main():
             max_counts[i] = np.amax(counts)
             predicted_numbers[i] = unique[np.argmax(counts)]
 
+        print(predicted_numbers)
         unique, counts = np.unique(predicted_numbers, return_counts = True)
 
         # if a number is the most represented in several clusters, 
@@ -205,11 +206,14 @@ def main():
 
 
         # mapping the old cluster indexes to the new one
-        new_clusters = clusters
+        new_clusters = copy.deepcopy(clusters)
+        new_centroids = copy.deepcopy(centroids)
         for i in range(k):
-            i_indexes = np.where(clusters == i)
-            new_clusters[i_indexes] = predicted_numbers[i]
+            new_clusters[clusters == i] = predicted_numbers[i]
+            new_centroids[int(predicted_numbers[i])] = centroids[i]
+
         clusters = new_clusters
+        centroids = new_centroids
 
 
     ## prediction
